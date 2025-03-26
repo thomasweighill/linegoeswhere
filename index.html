@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Goes Where</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        canvas {
+            border: 1px solid black;
+            cursor: crosshair;
+        }
+        #coordinates {
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            text-align: left;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Where Does Line Go?</h1>
+    <canvas id="drawingCanvas" width="600" height="400"></canvas>
+
+    <div>
+        <button id="scoreButton">See your score</button>
+        <button id="resetButton">Reset</button>
+    </div>
+
+    <div id="score">
+        <h3>Your score:</h3>
+        <p id="scoreDisplay"></p>
+    </div>
+
+    <script>
+        const numCoeffs = 3;
+        let lastX = -1;
+        let lastY = -1;
+        let drawing = false;
+
+        // Get the canvas and context
+        const canvas = document.getElementById("drawingCanvas");
+        const ctx = canvas.getContext("2d");
+        
+        let coordinates = new Map();
+        let coefficients = [];
+
+        // Initialize
+        for (let c =0; c < numCoeffs; c++){
+                coefficients[c] = Math.random()*200/numCoeffs;
+        }
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        coordinates = new Map();
+        drawing = false;
+        drawHalfTruth();
+        
+        
+
+        // Function to reset everything
+        function resetHint(){
+            for (let c =0; c < numCoeffs; c++){
+                coefficients[c] = (Math.random()-0.5)*200/numCoeffs;
+            }
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            coordinates = new Map();
+            displayValue.textContent = '\n';
+            drawing = false;
+            drawHalfTruth();
+        }
+
+        // Function to start drawing
+        function startDrawing(e) {
+            drawing = true;
+            draw(e);  // Draw immediately if the mouse is pressed
+        }
+
+        // Function to stop drawing
+        function stopDrawing() {
+            drawing = false;
+            ctx.beginPath(); // Start a new path
+        }
+
+        // Function to draw on the canvas
+        function draw(e) {
+            if (!drawing) {
+                lastX = -1;
+                laxtY = -1;
+                return;
+            }
+
+            // Get the position of the mouse on the canvas
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Draw the line
+            ctx.lineWidth = 2;
+            ctx.lineCap = "round";
+            ctx.strokeStyle = "black";
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+
+            // Store the coordinates
+            if ((lastX >= 0) && (lastX != x)){
+                for (let xx = lastX; xx <= Math.round(x); xx++){
+                    coordinates.set(xx, lastY + (xx-lastX)/Math.abs(x-lastX)*(y-lastY));
+                }
+                
+            }          
+            lastX = Math.round(x);
+            lastY = Math.round(y);
+
+        }
+
+        // Function to compute the score
+        function getScore() {
+            let deviation = 0;
+            for (let i=canvas.width/2; i < canvas.width; i++){
+                if (coordinates.has(i)) {
+                    deviation += Math.abs(coordinates.get(i) - trueFunction(i));
+                } else if (i <= canvas.width*0.95) {
+                    deviation += canvas.height;
+                }
+
+            }
+            return Math.round(canvas.width*canvas.height/(deviation+0.001));
+        }
+
+        // Hacky test function to be changed later
+        function trueFunction(x){
+            y = 200;
+            for (let c = 0; c < numCoeffs; c++){
+                y += coefficients[c]*Math.sin((c+1)*x/113);
+            }
+            return y
+        }
+
+        //Function to display the truth
+        function drawTruth() {
+            ctx.moveTo(canvas.width/2,trueFunction(canvas.width/2));
+            for (let i=canvas.width/2; i < canvas.width; i++){
+                // Draw the line
+                ctx.lineWidth = 2;
+                ctx.lineCap = "round";
+                ctx.strokeStyle = "red";
+                ctx.lineTo(i, trueFunction(i));
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(i, trueFunction(i));
+            }
+        }
+
+        //Function to display the truth
+        function drawHalfTruth() {
+            ctx.moveTo(0,trueFunction(0));
+            for (let i=0; i < canvas.width/2; i++){
+                // Draw the line
+                ctx.lineWidth = 2;
+                ctx.lineCap = "round";
+                ctx.strokeStyle = "green";
+                ctx.lineTo(i, trueFunction(i));
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(i, trueFunction(i));
+            }
+        }
+
+        // Get the button and the paragraph element
+        const scoreButton = document.getElementById('scoreButton');
+        const resetButton = document.getElementById('resetButton');
+        const displayValue = document.getElementById('scoreDisplay');
+
+        // Add an event listener to the score button
+        scoreButton.addEventListener('click', function() {
+            // Display the value when the button is clicked
+            drawTruth();
+            let score = getScore();
+            displayValue.textContent =  score + '\n';
+            drawing = false;
+        });
+
+        // Add an event listener to the rset button
+        resetButton.addEventListener('click', function() {
+            // Clear the display
+            resetHint();
+        });
+
+        // Add event listeners for mouse events
+        canvas.addEventListener("mousedown", startDrawing);
+        canvas.addEventListener("mouseup", stopDrawing);
+        canvas.addEventListener("mouseout", stopDrawing);
+        canvas.addEventListener("mousemove", draw);
+
+    </script>
+
+</body>
+</html>
