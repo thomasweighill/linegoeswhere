@@ -49,18 +49,13 @@
         // Get the canvas and context
         const canvas = document.getElementById("drawingCanvas");
         const ctx = canvas.getContext("2d");
+        const displayValue = document.getElementById('scoreDisplay');
         
         let coordinates = new Map();
         let coefficients = [];
 
         // Initialize
-        for (let c =0; c < numCoeffs; c++){
-                coefficients[c] = Math.random()*200/numCoeffs;
-        }
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        coordinates = new Map();
-        drawing = false;
-        drawHalfTruth();
+        resetHint(true);
         
         
         // PNG
@@ -246,7 +241,6 @@
         const resetButton = document.getElementById('resetButton');
         const todayButton = document.getElementById('todayButton');
         const randomButton = document.getElementById('randomButton');
-        const displayValue = document.getElementById('scoreDisplay');
 
         // Add event listeners to the buttons
         scoreButton.addEventListener('click', function() {
