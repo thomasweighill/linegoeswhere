@@ -14,23 +14,25 @@
             border: 1px solid black;
             cursor: crosshair;
         }
-        #coordinates {
-            margin-top: 20px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            text-align: left;
-            word-wrap: break-word;
-        }
     </style>
 </head>
 <body>
 
     <h1>Where Does Line Go?</h1>
+    <div>
+        It's the question everyone's asking. Use your mouse to finish drawing the line.
+    </div>
+    <br>
     <canvas id="drawingCanvas" width="600" height="400"></canvas>
 
     <div>
         <button id="scoreButton">See your score</button>
-        <button id="resetButton">Reset</button>
+    </div>
+    <br>
+    <div>
+        <button id="resetButton">Clear</button>
+        <button id="todayButton">Today's line</button>
+        <button id="randomButton">Random line</button>
     </div>
 
     <div id="score">
@@ -61,12 +63,32 @@
         drawHalfTruth();
         
         
+        // PNG
+        function myPNG(seed){
+            let result = Math.cos(seed)*100000
+            return result - Math.floor(result)
+        }
 
         // Function to reset everything
-        function resetHint(){
-            for (let c =0; c < numCoeffs; c++){
-                coefficients[c] = (Math.random()-0.5)*200/numCoeffs;
+        function resetHint(useDay){
+            if (!useDay){
+                for (let c =0; c < numCoeffs; c++){
+                    coefficients[c] = (Math.random()-0.5)*200/numCoeffs;
+                }
             }
+            else{
+                const date = new Date();
+                let day = date.getDate();
+                let month = date.getMonth() + 1;
+                let year = date.getFullYear();
+                let seed = year*10000 + month*100 + day;
+                for (let c =0; c < numCoeffs; c++){
+                    coefficients[c] = (myPNG(seed)-0.5)*200/numCoeffs;
+                    seed += 1/numCoeffs
+                }
+
+            }
+            
             ctx.clearRect(0,0,canvas.width,canvas.height);
             coordinates = new Map();
             displayValue.textContent = '\n';
@@ -138,7 +160,7 @@
         function trueFunction(x){
             y = 200;
             for (let c = 0; c < numCoeffs; c++){
-                y += coefficients[c]*Math.sin((c+1)*x/113);
+                y += coefficients[c]*Math.sin((c+1)*x/177-(coefficients[c]+0.5)*numCoeffs*2);
             }
             return y
         }
@@ -176,9 +198,11 @@
         // Get the button and the paragraph element
         const scoreButton = document.getElementById('scoreButton');
         const resetButton = document.getElementById('resetButton');
+        const todayButton = document.getElementById('todayButton');
+        const randomButton = document.getElementById('randomButton');
         const displayValue = document.getElementById('scoreDisplay');
 
-        // Add an event listener to the score button
+        // Add event listeners to the buttons
         scoreButton.addEventListener('click', function() {
             // Display the value when the button is clicked
             drawTruth();
@@ -187,10 +211,23 @@
             drawing = false;
         });
 
-        // Add an event listener to the rset button
+        randomButton.addEventListener('click', function() {
+            // Clear the display
+            resetHint(false);
+        });
+
+        todayButton.addEventListener('click', function() {
+            // Clear the display
+            resetHint(true);
+        });
+
         resetButton.addEventListener('click', function() {
             // Clear the display
-            resetHint();
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            coordinates = new Map();
+            displayValue.textContent = '\n';
+            drawing = false;
+            drawHalfTruth();
         });
 
         // Add event listeners for mouse events
