@@ -20,10 +20,10 @@
 
     <h1>Where Does Line Go?</h1>
     <div>
-        It's the question everyone's asking. Use your mouse to finish drawing the line.
+        It's the question everyone's asking. Finish drawing the line.
     </div>
     <br>
-    <canvas id="drawingCanvas" width="600" height="400"></canvas>
+    <canvas id="drawingCanvas" width="400" height="300"></canvas>
 
     <div>
         <button id="scoreButton">See your score</button>
@@ -68,7 +68,7 @@
         function resetHint(useDay){
             if (!useDay){
                 for (let c =0; c < numCoeffs; c++){
-                    coefficients[c] = (Math.random()-0.5)*200/numCoeffs;
+                    coefficients[c] = (Math.random()-0.5)*canvas.height/numCoeffs;
                 }
             }
             else{
@@ -78,7 +78,7 @@
                 let year = date.getFullYear();
                 let seed = year*10000 + month*100 + day;
                 for (let c =0; c < numCoeffs; c++){
-                    coefficients[c] = (myPNG(seed)-0.5)*200/numCoeffs;
+                    coefficients[c] = (myPNG(seed)-0.5)*canvas.height/numCoeffs;
                     seed += 1/numCoeffs
                 }
 
@@ -194,19 +194,19 @@
                 }
 
             }
-            return Math.round(canvas.width*canvas.height/(deviation+0.001));
+            return Math.round(canvas.width*canvas.height/2/(deviation+0.001))-1;
         }
 
-        // Hacky test function to be changed later
+        // The true line
         function trueFunction(x){
-            y = 200;
+            y = canvas.height/2;
             for (let c = 0; c < numCoeffs; c++){
-                y += coefficients[c]*Math.sin((c+1)*x/177-(coefficients[c]+0.5)*numCoeffs*2);
+                y += coefficients[c]*Math.sin((c+1)*x*600/canvas.width/177-(coefficients[c]+0.5)*numCoeffs*2);
             }
             return y
         }
 
-        //Function to display the truth
+        // Display the truth
         function drawTruth() {
             ctx.moveTo(canvas.width/2,trueFunction(canvas.width/2));
             for (let i=canvas.width/2; i < canvas.width; i++){
@@ -221,7 +221,7 @@
             }
         }
 
-        //Function to display the truth
+        // Display half the truth
         function drawHalfTruth() {
             ctx.moveTo(0,trueFunction(0));
             for (let i=0; i < canvas.width/2; i++){
