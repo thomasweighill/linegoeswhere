@@ -97,19 +97,30 @@
         }
 
         // Function to start drawing
-        function startDrawing(e) {
+        function startMouseDrawing(e) {
             drawing = true;
-            draw(e);  // Draw immediately if the mouse is pressed
+            mouseDraw(e);  
+        }
+
+        function startTouchDrawing(e) {
+            drawing = true;
+            e.preventDefault();
+            touchDraw(e);  
         }
 
         // Function to stop drawing
-        function stopDrawing() {
+        function stopMouseDrawing() {
+            drawing = false;
+            ctx.beginPath(); // Start a new path
+        }
+
+        function stopTouchDrawing() {
             drawing = false;
             ctx.beginPath(); // Start a new path
         }
 
         // Function to draw on the canvas
-        function draw(e) {
+        function mouseDraw(e) {
             if (!drawing) {
                 lastX = -1;
                 laxtY = -1;
@@ -120,6 +131,41 @@
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
+
+            // Draw the line
+            ctx.lineWidth = 2;
+            ctx.lineCap = "round";
+            ctx.strokeStyle = "black";
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+
+            // Store the coordinates
+            if ((lastX >= 0) && (lastX != x)){
+                for (let xx = lastX; xx <= Math.round(x); xx++){
+                    coordinates.set(xx, lastY + (xx-lastX)/Math.abs(x-lastX)*(y-lastY));
+                }
+                
+            }          
+            lastX = Math.round(x);
+            lastY = Math.round(y);
+
+        }
+
+        function touchDraw(e) {
+            if (!drawing) {
+                lastX = -1;
+                laxtY = -1;
+                return;
+            }
+
+            e.preventDefault();
+
+            // Get the position of the mouse on the canvas
+            const rect = canvas.getBoundingClientRect();
+            const x = e.touches[0].clientX - rect.left;
+            const y = e.touches[0].clientY - rect.top;
 
             // Draw the line
             ctx.lineWidth = 2;
@@ -231,10 +277,15 @@
         });
 
         // Add event listeners for mouse events
-        canvas.addEventListener("mousedown", startDrawing);
-        canvas.addEventListener("mouseup", stopDrawing);
-        canvas.addEventListener("mouseout", stopDrawing);
-        canvas.addEventListener("mousemove", draw);
+        canvas.addEventListener("mousedown", startMouseDrawing);
+        canvas.addEventListener("mouseup", stopMouseDrawing);
+        canvas.addEventListener("mouseout", stopMouseDrawing);
+        canvas.addEventListener("mousemove", mouseDraw);
+
+        // Event listeners for touch events
+        canvas.addEventListener("touchstart", startTouchDrawing);
+        canvas.addEventListener("touchend", stopTouchDrawing);
+        canvas.addEventListener("touchmove", touchDraw);
 
     </script>
 
