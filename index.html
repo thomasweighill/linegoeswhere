@@ -190,18 +190,24 @@
                 if (coordinates.has(i)) {
                     deviation += Math.abs(coordinates.get(i) - trueFunction(i));
                 } else if (i <= canvas.width*0.95) {
-                    deviation += canvas.height;
+                    deviation += canvas.height/2;
                 }
 
             }
-            return Math.round(canvas.width*canvas.height/2/(deviation+0.001))-1;
+            let score = 100*(canvas.width*canvas.height/8 - deviation)/(canvas.width*canvas.height/8);
+            if (score < 0){
+                return 0;
+            }
+            else {
+                return Math.round(score);
+            }
         }
 
         // The true line
         function trueFunction(x){
             y = canvas.height/2;
             for (let c = 0; c < numCoeffs; c++){
-                y += coefficients[c]*Math.sin((c+1)*x*600/canvas.width/177-(coefficients[c]+0.5)*numCoeffs*2);
+                y += coefficients[c]*Math.sin((c+1)*x*600/canvas.width/177-100*(coefficients[c]+0.5)*numCoeffs*2);
             }
             return y
         }
@@ -219,6 +225,7 @@
                 ctx.beginPath();
                 ctx.moveTo(i, trueFunction(i));
             }
+            ctx.moveTo(canvas.width/2,trueFunction(canvas.width/2));
         }
 
         // Display half the truth
