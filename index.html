@@ -20,42 +20,61 @@
 
     <h1>Where Does Line Go?</h1>
     <div>
-        "It's the question everyone's asking." Finish drawing the line and see your score. Come back every day for a new line of the day.
+        "It's the question everyone's asking."<br>
+        You have five guesses to finish the line. Come back every day for a new line of the day.
     </div>
     <br>
     <canvas id="drawingCanvas" width="350" height="300"></canvas>
 
     <div>
-        <button id="scoreButton">See your score</button>
+        <button id="scoreButton">Score this attempt</button>
+        <button id="resetButton">Clear</button>
     </div>
     <br>
     <div>
-        <button id="resetButton">Clear</button>
         <button id="todayButton">Today's line</button>
         <button id="randomButton">Random line</button>
     </div>
 
     <div id="score">
         <h3>Your score:</h3>
-        <p id="scoreDisplay"></p>
+        <p style="color:#1f77b4;" id="scoreDisplay1"></p>
+        <p style="color:#ff7f0e;" id="scoreDisplay2"></p>
+        <p style="color:#2ca02c;" id="scoreDisplay3"></p>
+        <p style="color:#9467bd;" id="scoreDisplay4"></p>
+        <hr>
+        <p style="color:#d62728;" id="scoreDisplay5"></p>
     </div>
 
     <script>
         const numCoeffs = 3;
+        const lineColors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#9467bd", "#d62728"];
         let lastX = -1;
         let lastY = -1;
         let drawing = false;
+        let attempt = 0;
 
-        // Get the canvas and context
+        // Get elements
         const canvas = document.getElementById("drawingCanvas");
         const ctx = canvas.getContext("2d");
-        const displayValue = document.getElementById('scoreDisplay');
+        const scoreButton = document.getElementById('scoreButton');
+        const resetButton = document.getElementById('resetButton');
+        const todayButton = document.getElementById('todayButton');
+        const randomButton = document.getElementById('randomButton');
+        const displayValues = [
+            document.getElementById('scoreDisplay1'),
+            document.getElementById('scoreDisplay2'),
+            document.getElementById('scoreDisplay3'),
+            document.getElementById('scoreDisplay4'),
+            document.getElementById('scoreDisplay5')
+        ];
         
-        let coordinates = new Map();
+        let coordinates = [];
+        let drawncoordinates = [];
         let coefficients = [];
 
         // Initialize
-        resetHint(true);
+        resetHint(true)
         
         
         // PNG
@@ -66,6 +85,8 @@
 
         // Function to reset everything
         function resetHint(useDay){
+            scoreButton.textContent = "Score this attempt";
+            attempt = 0;
             if (!useDay){
                 for (let c =0; c < numCoeffs; c++){
                     coefficients[c] = (Math.random()-0.5)*canvas.height/numCoeffs;
@@ -85,13 +106,16 @@
             }
             
             ctx.clearRect(0,0,canvas.width,canvas.height);
-            coordinates = new Map();
-            displayValue.textContent = '\n';
+            coordinates = [new Map(), new Map(), new Map(), new Map(), new Map()];
+            drawncoordinates = [[],[],[],[],[]];
+            for (let i = 0; i < displayValues.length; i++){
+                displayValues[i].textContent = '\n';
+            }
             drawing = false;
             drawHalfTruth();
         }
 
-        // Function to start drawing
+// Function to start drawing
         function startMouseDrawing(e) {
             drawing = true;
             mouseDraw(e);  
@@ -116,7 +140,7 @@
 
         // Function to draw on the canvas
         function mouseDraw(e) {
-            if (!drawing) {
+            if (!drawing | attempt > 4) {
                 lastX = -1;
                 laxtY = -1;
                 return;
@@ -126,11 +150,12 @@
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
+            drawncoordinates[attempt].push([x,y]);
 
             // Draw the line
             ctx.lineWidth = 2;
             ctx.lineCap = "round";
-            ctx.strokeStyle = "black";
+            ctx.strokeStyle = lineColors[attempt];
             ctx.lineTo(x, y);
             ctx.stroke();
             ctx.beginPath();
@@ -139,7 +164,7 @@
             // Store the coordinates
             if ((lastX >= 0) && (lastX != x)){
                 for (let xx = lastX; xx <= Math.round(x); xx++){
-                    coordinates.set(xx, lastY + (xx-lastX)/Math.abs(x-lastX)*(y-lastY));
+                    coordinates[attempt].set(xx, lastY + (xx-lastX)/Math.abs(x-lastX)*(y-lastY));
                 }
                 
             }          
@@ -149,7 +174,7 @@
         }
 
         function touchDraw(e) {
-            if (!drawing) {
+            if (!drawing | attempt > 4) {
                 lastX = -1;
                 laxtY = -1;
                 return;
@@ -165,7 +190,7 @@
             // Draw the line
             ctx.lineWidth = 2;
             ctx.lineCap = "round";
-            ctx.strokeStyle = "black";
+            ctx.strokeStyle = lineColors[attempt];
             ctx.lineTo(x, y);
             ctx.stroke();
             ctx.beginPath();
@@ -174,7 +199,7 @@
             // Store the coordinates
             if ((lastX >= 0) && (lastX != x)){
                 for (let xx = lastX; xx <= Math.round(x); xx++){
-                    coordinates.set(xx, lastY + (xx-lastX)/Math.abs(x-lastX)*(y-lastY));
+                    coordinates[attempt].set(xx, lastY + (xx-lastX)/Math.abs(x-lastX)*(y-lastY));
                 }
                 
             }          
@@ -187,8 +212,8 @@
         function getScore() {
             let deviation = 0;
             for (let i=canvas.width/2; i < canvas.width; i++){
-                if (coordinates.has(i)) {
-                    deviation += Math.abs(coordinates.get(i) - trueFunction(i));
+                if (coordinates[attempt].has(i)) {
+                    deviation += Math.abs(coordinates[attempt].get(i) - trueFunction(i));
                 } else if (i <= canvas.width*0.95) {
                     deviation += canvas.height/2;
                 }
@@ -203,39 +228,56 @@
             }
         }
 
-        // The true line
+        // Find the truth
         function trueFunction(x){
             y = canvas.height/2;
             for (let c = 0; c < numCoeffs; c++){
                 y += coefficients[c]*Math.sin((c+1)*x*600/canvas.width/177-100*(coefficients[c]+0.5)*numCoeffs*2);
             }
-            return y
+            return y;
         }
 
-        // Display the truth
+        //Function to display the truth
         function drawTruth() {
             ctx.moveTo(canvas.width/2,trueFunction(canvas.width/2));
             for (let i=canvas.width/2; i < canvas.width; i++){
                 // Draw the line
                 ctx.lineWidth = 2;
                 ctx.lineCap = "round";
-                ctx.strokeStyle = "red";
+                ctx.strokeStyle = "black";
                 ctx.lineTo(i, trueFunction(i));
                 ctx.stroke();
                 ctx.beginPath();
                 ctx.moveTo(i, trueFunction(i));
             }
+        }
+
+        //Function to display attempts so far
+        function drawThusFar(){
+            for (let a = 0; a < attempt; a++){
+                ctx.moveTo(canvas.width/2,trueFunction(canvas.width/2));
+                for (let i=0; i < drawncoordinates[a].length; i++){
+                    // Draw the line
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = "round";
+                    ctx.strokeStyle = lineColors[a];
+                    ctx.lineTo(drawncoordinates[a][i][0], drawncoordinates[a][i][1]);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(drawncoordinates[a][i][0], drawncoordinates[a][i][1]);
+                }
+            }
             ctx.moveTo(canvas.width/2,trueFunction(canvas.width/2));
         }
 
-        // Display half the truth
+        //Function to display the hint
         function drawHalfTruth() {
             ctx.moveTo(0,trueFunction(0));
             for (let i=0; i < canvas.width/2; i++){
                 // Draw the line
                 ctx.lineWidth = 2;
                 ctx.lineCap = "round";
-                ctx.strokeStyle = "green";
+                ctx.strokeStyle = "black";
                 ctx.lineTo(i, trueFunction(i));
                 ctx.stroke();
                 ctx.beginPath();
@@ -243,38 +285,47 @@
             }
         }
 
-        // Get the button and the paragraph element
-        const scoreButton = document.getElementById('scoreButton');
-        const resetButton = document.getElementById('resetButton');
-        const todayButton = document.getElementById('todayButton');
-        const randomButton = document.getElementById('randomButton');
 
         // Add event listeners to the buttons
         scoreButton.addEventListener('click', function() {
             // Display the value when the button is clicked
-            drawTruth();
             let score = getScore();
-            displayValue.textContent =  score + '\n';
+            if (attempt < 4){
+                displayValues[attempt].textContent =  'Attempt ' + (attempt+1) + ': ' + score + '\n';
+            }
+            else if (attempt == 4){
+                displayValues[attempt].textContent =  'FINAL SCORE: ' + score + '\n';
+                drawTruth();
+            }
+            if (attempt == 3){
+                scoreButton.textContent = "Get final score";
+            }
+            attempt += 1
             drawing = false;
         });
 
         randomButton.addEventListener('click', function() {
             // Clear the display
+            attempt = 1;
             resetHint(false);
         });
 
         todayButton.addEventListener('click', function() {
             // Clear the display
+            attempt = 1;
             resetHint(true);
         });
 
         resetButton.addEventListener('click', function() {
-            // Clear the display
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            coordinates = new Map();
-            displayValue.textContent = '\n';
-            drawing = false;
-            drawHalfTruth();
+            if (attempt <= 4){
+                // Clear the display
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                coordinates[attempt] = new Map();
+                drawncoordinates[attempt] = [];
+                drawThusFar();
+                drawing = false;
+                drawHalfTruth();
+            }
         });
 
         // Add event listeners for mouse events
