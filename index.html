@@ -14,6 +14,25 @@
             border: 1px solid black;
             cursor: crosshair;
         }
+        .square-container {
+          display: flex;
+          justify-content: center;
+        }
+        .square {
+          width: 50px;
+          height: 50px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          color: white;
+          font-size: 20px;
+          margin: 5px;
+        }
+        .square1 { background-color: #1f77b4;}
+        .square2 { background-color: #ff7f0e; }
+        .square3 { background-color: #2ca02c; }
+        .square4 { background-color: #9467bd; }
+        .square5 { background-color: #d62728; width: 75px; height:75px; font-size: 30px;}
     </style>
 </head>
 <body>
@@ -21,7 +40,7 @@
     <h1>Where Does Line Go?</h1>
     <div>
         "It's the question everyone's asking."<br>
-        You have five guesses to finish the line. Come back every day for a new line of the day.
+        Five guesses to finish the line. Come back every day for a new line of the day.
     </div>
     <br>
     <canvas id="drawingCanvas" width="350" height="300"></canvas>
@@ -37,16 +56,18 @@
     </div>
 
     <div id="score">
-        <h3>Your score:</h3>
-        <p style="color:#1f77b4;" id="scoreDisplay1"></p>
-        <p style="color:#ff7f0e;" id="scoreDisplay2"></p>
-        <p style="color:#2ca02c;" id="scoreDisplay3"></p>
-        <p style="color:#9467bd;" id="scoreDisplay4"></p>
-        <hr>
-        <p style="color:#d62728;" id="scoreDisplay5"></p>
+        <h3>Your scores:</h3>
+        <div class="square-container">
+            <div class="square square1" id="scoreDisplay1"></div>
+            <div class="square square2" id="scoreDisplay2"></div>
+            <div class="square square3" id="scoreDisplay3"></div>
+            <div class="square square4" id="scoreDisplay4"></div>
+            <div class="square square5" id="scoreDisplay5"><p>FINAL SCORE:</p></div>
+        </div>
     </div>
 
     <script>
+
         const numCoeffs = 3;
         const lineColors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#9467bd", "#d62728"];
         let lastX = -1;
@@ -292,10 +313,10 @@
             // Display the value when the button is clicked
             let score = getScore();
             if (attempt < 4){
-                displayValues[attempt].textContent =  'Attempt ' + (attempt+1) + ': ' + score + '\n';
+                displayValues[attempt].textContent =  score;
             }
             else if (attempt == 4){
-                displayValues[attempt].textContent =  'FINAL SCORE: ' + score + '\n';
+                displayValues[attempt].textContent =  score;
                 drawTruth();
             }
             if (attempt == 3){
