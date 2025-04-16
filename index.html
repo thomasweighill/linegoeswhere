@@ -240,7 +240,8 @@
                 }
 
             }
-            let score = 100*(canvas.width*canvas.height/8 - deviation)/(canvas.width*canvas.height/8);
+            let raw_score =  1.5*(-deviation)/(canvas.width*canvas.height/8);
+            let score = 100*Math.exp(raw_score);
             if (score < 0){
                 return 0;
             }
