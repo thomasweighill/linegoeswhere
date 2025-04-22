@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Where Is Fox Now?</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 0px;
+            font-size: 14px;
+        }
+        canvas {
+            border: 1px solid black;
+            cursor: crosshair;
+        }
+        .square-container {
+          display: flex;
+          justify-content: center;
+        }
+        .square {
+          width: 50px;
+          height: 50px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          color: white;
+          font-size: 20px;
+          margin: 5px;
+        }
+        .square1 { background-color: #1f77b4;}
+        .square2 { background-color: #ff7f0e; }
+        .square3 { background-color: #2ca02c; }
+        .square4 { background-color: #9467bd; }
+        .square5 { background-color: #d62728; width: 75px; height:75px; font-size: 30px;}
+    </style>
+</head>
+<body>
+
+    <h2>Where Is Fox Now?</h2>
+    <div>
+        "It's the (other) question everyone's asking."<br>
+        Five guesses to find the fox. Come back every day for a new hiding spot.
+    </div>
+    <br>
+    <canvas id="drawingCanvas" width="350" height="300"></canvas>
+
+    <div id="score">
+        <h3>Your scores:</h3>
+        <div class="square-container">
+            <div class="square square1" id="scoreDisplay1"></div>
+            <div class="square square2" id="scoreDisplay2"></div>
+            <div class="square square3" id="scoreDisplay3"></div>
+            <div class="square square4" id="scoreDisplay4"></div>
+            <div class="square square5" id="scoreDisplay5"></div>
+        </div>
+    </div>
+    <div>
+        <button id="todayButton">Today's fox</button>
+        <button id="randomButton">Random fox</button>
+    </div>
+
+    <script>
+
+        const dotColors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#9467bd", "#d62728"];
+        let attempt = 0;
+
+        // Get elements
+        const canvas = document.getElementById("drawingCanvas");
+        const ctx = canvas.getContext("2d");
+        const todayButton = document.getElementById('todayButton');
+        const randomButton = document.getElementById('randomButton');
+        const displayValues = [
+            document.getElementById('scoreDisplay1'),
+            document.getElementById('scoreDisplay2'),
+            document.getElementById('scoreDisplay3'),
+            document.getElementById('scoreDisplay4'),
+            document.getElementById('scoreDisplay5')
+        ];
+
+        // PNG
+        function myPNG(seed){
+            let result = Math.cos(seed)*100000
+            return result - Math.floor(result)
+        }
+        
+        let fox_x = 0;
+        let fox_y = 0;
+        let img = new Image();
+
+        // Initialize
+        resetHint(true)
+        
+
+        // Function to reset everything
+        function resetHint(useDay){
+            attempt = 0;
+            if (!useDay){
+                fox_x = Math.random()*canvas.width;
+                fox_y = Math.random()*canvas.height;
+                number = Math.round(Math.random()*3+1)
+            }
+            else{
+                const date = new Date();
+                let day = date.getDate();
+                let month = date.getMonth() + 1;
+                let year = date.getFullYear();
+                let seed = year*10000 + month*100 + day;
+                fox_x = myPNG(seed)*canvas.width;
+                fox_y = myPNG(seed+10000)*canvas.width;
+                number = Math.round(myPNG(seed)*3+1)
+
+            }
+            img.src = './fox' + number + '.png';
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            for (let i = 0; i < displayValues.length; i++){
+                displayValues[i].textContent = '\n';
+            }
+        }
+
+        // Function to guess point
+        function mouseClick(e) {
+            if (attempt >= 5) {return;}
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            if ((x > 0) & (x < canvas.width) & (y > 0) & (y < canvas.height)){
+                drawQuestionMark(x, y, dotColors[attempt]);
+                score = getScore(x,y)
+                displayValues[attempt].textContent = score;
+                attempt += 1;
+            }
+            if (attempt == 5){
+                drawTruth();
+            }
+        }
+
+        // Function to guess point
+        function touchClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.touches[0].clientX - rect.left;
+            const y = e.touches[0].clientY - rect.top;
+        }
+
+        // Function to draw cros
+        function drawCross(x, y, size, color) {
+          ctx.beginPath();
+          ctx.moveTo(x - size / 2, y);
+          ctx.lineTo(x + size / 2, y);
+          ctx.moveTo(x, y - size / 2);
+          ctx.lineTo(x, y + size / 2);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        function drawQuestionMark(x, y, color, fontSize = 40, ) {
+            h = -0.5*fontSize;
+            w = 0.3*fontSize;
+            ctx.font = `${fontSize}px sans-serif`;
+            ctx.fillStyle = color;
+            ctx.fillText('?', x-w, y-h); // y + fontSize to align properly vertically
+          }
+
+
+        // Function to compute the score
+        function getScore(x,y) {
+            let deviation = Math.sqrt((x - fox_x)**2 + (y - fox_y)**2);
+            let raw_score =  1.5*(-deviation)/(canvas.width);
+            let score = 100*Math.exp(raw_score);
+            if (score < 0){
+                return 0;
+            }
+            else {
+                return Math.round(score);
+            }
+        }
+
+        //Function to display the truth
+        function drawTruth() {
+            w = img.width/img.height*50
+            h = 50
+            ctx.drawImage(img, fox_x-w/2, fox_y - h/2, w, h); 
+        }
+
+
+        randomButton.addEventListener('click', function() {
+            // Clear the display
+            attempt = 1;
+            resetHint(false);
+        });
+
+        todayButton.addEventListener('click', function() {
+            // Clear the display
+            attempt = 1;
+            resetHint(true);
+        });
+
+        // Add event listeners for mouse events
+        canvas.addEventListener("click", mouseClick);
+        
+        // Event listeners for touch events
+        canvas.addEventListener("touches", touchClick);
+
+    </script>
+
+</body>
+</html>
