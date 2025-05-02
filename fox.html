@@ -108,7 +108,7 @@
                 let year = date.getFullYear();
                 let seed = year*10000 + month*100 + day;
                 fox_x = myPNG(seed)*canvas.width;
-                fox_y = myPNG(seed+10000)*canvas.width;
+                fox_y = myPNG(seed+10000)*canvas.height;
                 number = Math.round(myPNG(seed)*3+1)
 
             }
@@ -136,12 +136,6 @@
             }
         }
 
-        // Function to guess point
-        function touchClick(e) {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.touches[0].clientX - rect.left;
-            const y = e.touches[0].clientY - rect.top;
-        }
 
         // Function to draw cros
         function drawCross(x, y, size, color) {
@@ -200,8 +194,6 @@
         // Add event listeners for mouse events
         canvas.addEventListener("click", mouseClick);
         
-        // Event listeners for touch events
-        canvas.addEventListener("touches", touchClick);
 
     </script>
 
